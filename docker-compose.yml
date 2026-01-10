@@ -9,7 +9,7 @@ services:
       - COIN=Komodo
       - DB_DIRECTORY=/data
       - DAEMON_URL=${DAEMON_URL:-http://rpcuser:rpcpassword@127.0.0.1:7771/}
-      - SERVICES=tcp://:50001, rpc://127.0.0.1:8000
+      - SERVICES=tcp://:50001,rpc://:8000
       - EVENT_LOOP_POLICY=uvloop
       - PEER_DISCOVERY=self
       - MAX_SESSIONS=1000
