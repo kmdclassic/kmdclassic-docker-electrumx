@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  certbot:
+    image: certbot/dns-cloudflare:latest
+    container_name: certbot
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME:-}
+      - CF_API_TOKEN=${CF_API_TOKEN:-}
+      - CF_EMAIL=${CF_EMAIL:-}
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - RENEWAL_INTERVAL=${RENEWAL_INTERVAL:-86400}
+    volumes:
+      - ./ssl:/ssl
+      - ./certbot-entrypoint.sh:/certbot-entrypoint.sh:ro
+      - certbot-certs:/etc/letsencrypt
+    entrypoint: /bin/sh
+    command: /certbot-entrypoint.sh
+    restart: unless-stopped
+
   electrumx:
     build:
       context: .
@@ -9,7 +27,7 @@ services:
       - COIN=Komodo
       - DB_DIRECTORY=/data
       - DAEMON_URL=${DAEMON_URL:-http://rpcuser:rpcpassword@127.0.0.1:7771/}
-      - SERVICES=tcp://:50001,rpc://:8000
+      - SERVICES=tcp://:50001,ssl://:50002,wss://:50004,rpc://:8000
       - EVENT_LOOP_POLICY=uvloop
       - PEER_DISCOVERY=self
       - MAX_SESSIONS=1000
@@ -20,8 +38,14 @@ services:
       - BANDWIDTH_UNIT_COST=10000
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
+      - SSL_CERTFILE=${SSL_CERTFILE:-}
+      - SSL_KEYFILE=${SSL_KEYFILE:-}
     network_mode: host
     volumes:
       - ./data:/data
+      - ./ssl:/ssl:ro
     restart: unless-stopped
+
+volumes:
+  certbot-certs:
 
