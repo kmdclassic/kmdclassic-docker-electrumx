@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  electrumx:
+    build:
+      context: .
+    container_name: electrumx
+    environment:
+      - COIN=Komodo
+      - DB_DIRECTORY=/data
+      - DAEMON_URL=${DAEMON_URL:-http://rpcuser:rpcpassword@127.0.0.1:7771/}
+      - SERVICES=tcp://:50001, rpc://127.0.0.1:8000
+      - EVENT_LOOP_POLICY=uvloop
+      - PEER_DISCOVERY=self
+      - MAX_SESSIONS=1000
+      - MAX_SEND=2000000
+      - INITIAL_CONCURRENT=50
+      - COST_SOFT_LIMIT=0
+      - COST_HARD_LIMIT=0
+      - BANDWIDTH_UNIT_COST=10000
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+    network_mode: host
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
