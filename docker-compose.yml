@@ -18,6 +18,11 @@ services:
     entrypoint: /bin/sh
     command: /certbot-entrypoint.sh
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   electrumx:
     build:
@@ -45,6 +50,11 @@ services:
       - ./data:/data
       - ./ssl:/ssl:ro
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   certbot-certs:
