@@ -75,6 +75,11 @@ RUN /app/venv/bin/pip install --upgrade pip && \
 RUN /app/venv/bin/pip install --no-cache-dir . && \
     /app/venv/bin/pip install --no-cache-dir .[uvloop,ujson]
 
+# Python 3.14: get_event_loop() no longer creates a loop; patch compact_history
+RUN SITEDIR=$(/app/venv/bin/python -c "import site; print(site.getsitepackages()[0])") && \
+    COMPACT="$SITEDIR/electrumx/cli/electrumx_compact_history.py" && \
+    sed -i 's/loop = asyncio\.get_event_loop()/loop = asyncio.new_event_loop(); asyncio.set_event_loop(loop)/' "$COMPACT"
+
 # Install su-exec for user switching
 RUN apk add --no-cache su-exec
 
