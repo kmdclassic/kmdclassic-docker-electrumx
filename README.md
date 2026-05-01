@@ -112,8 +112,9 @@ All configuration parameters are set in `docker-compose.yml` via environment var
 - `MAX_SESSIONS=1000` - maximum number of sessions
 - `MAX_SEND=2000000` - maximum send size
 - `INITIAL_CONCURRENT=50` - initial number of concurrent connections
-- `COST_SOFT_LIMIT=0` and `COST_HARD_LIMIT=0` - cost limits
-- `BANDWIDTH_UNIT_COST=10000` - bandwidth unit cost
+- `COST_SOFT_LIMIT=1000` - per-session cost above which ElectrumX starts throttling requests by inserting a sleep before each response (the `request sleep` you see in startup logs). ElectrumX defaults to `1000`. Setting this to `0` makes every session look over-limit immediately, which throttles all clients to a crawl.
+- `COST_HARD_LIMIT=10000` - per-session cost at which ElectrumX disconnects the client. ElectrumX defaults to `10000`. Setting this to `0` causes every session to exceed the hard limit on its first request, which is why a misconfigured `0` looks like the server "doesn't respond".
+- `BANDWIDTH_UNIT_COST=5000` - number of bytes that count as one cost unit when accumulating session cost. ElectrumX defaults to `5000`. Higher values let sessions transfer more data before hitting the soft/hard limits.
 - `PUID=1000` - User ID to run ElectrumX server (default: 1000)
 - `PGID=1000` - Group ID to run ElectrumX server (default: 1000)
 
