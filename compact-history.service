@@ -1,0 +1,17 @@
+[Unit]
+Description=Compact ElectrumX history database
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=kmdclassic
+WorkingDirectory=/home/kmdclassic/electrumx
+# Run the maintenance script from the project directory.
+ExecStart=/home/kmdclassic/electrumx/compact-history.sh
+# Allow enough time for compaction on larger databases.
+TimeoutStartSec=2h
+
+[Install]
+WantedBy=multi-user.target

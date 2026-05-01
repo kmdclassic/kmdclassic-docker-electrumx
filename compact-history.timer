@@ -1,0 +1,14 @@
+[Unit]
+Description=Run ElectrumX compact-history every 24 hours
+
+[Timer]
+# First run shortly after the timer is enabled.
+OnActiveSec=5min
+# Re-run every 24 hours after the previous execution.
+OnUnitActiveSec=24h
+# Catch up after downtime if a run was missed.
+Persistent=true
+Unit=compact-history.service
+
+[Install]
+WantedBy=timers.target
