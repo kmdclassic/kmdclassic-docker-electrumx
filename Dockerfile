@@ -48,8 +48,11 @@ RUN cd /tmp && \
 # Create working directory
 WORKDIR /app
 
-# Clone ElectrumX repository
-RUN git clone https://github.com/spesmilo/electrumx.git .
+# Clone ElectrumX repository at a pinned commit so source-level patches below
+# remain valid across rebuilds. Bump deliberately when upgrading.
+ARG ELECTRUMX_COMMIT=24865dc3a8ac8d360e467df704777c1bbef72706
+RUN git clone https://github.com/spesmilo/electrumx.git . && \
+    git checkout ${ELECTRUMX_COMMIT}
 
 # Create virtual environment
 RUN python3 -m venv /app/venv
@@ -79,6 +82,28 @@ RUN /app/venv/bin/pip install --no-cache-dir . && \
 RUN SITEDIR=$(/app/venv/bin/python -c "import site; print(site.getsitepackages()[0])") && \
     COMPACT="$SITEDIR/electrumx/cli/electrumx_compact_history.py" && \
     sed -i 's/loop = asyncio\.get_event_loop()/loop = asyncio.new_event_loop(); asyncio.set_event_loop(loop)/' "$COMPACT"
+
+# Add INFO progress logging to fs_block_hashes so the header merkle cache
+# initialization on huge chains (e.g. KMD Classic) is observable in logs.
+# Logs ~100 lines (every 1%) only when count >= 100k, so small calls stay quiet.
+RUN /app/venv/bin/python - <<'PY'
+import site
+path = f"{site.getsitepackages()[0]}/electrumx/server/db.py"
+src = open(path).read()
+needle = """        offset = 0
+        headers = []
+        for n in range(count):
+            hlen = self.header_len(height + n)"""
+replacement = """        offset = 0
+        headers = []
+        log_every = max(1, count // 100) if count >= 100000 else 0
+        for n in range(count):
+            if log_every and n and n % log_every == 0:
+                self.logger.info(f'fs_block_hashes progress: {n:,}/{count:,} ({100*n/count:.1f}%)')
+            hlen = self.header_len(height + n)"""
+assert needle in src, "fs_block_hashes patch needle not found — pin the upstream commit or update the needle"
+open(path, "w").write(src.replace(needle, replacement))
+PY
 
 # Install su-exec for user switching
 RUN apk add --no-cache su-exec
